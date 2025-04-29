@@ -10,7 +10,7 @@ class UserCreate(BaseModel):
     email: str
     password: str
     role: RoleEnum = RoleEnum.visiteur
-    username: str  # Ajoute ici le champ 'username' comme demandé
+    username: str  
 
 class UserResponse(BaseModel):
     id: int
@@ -18,7 +18,7 @@ class UserResponse(BaseModel):
     role: RoleEnum
 
     class Config:
-        from_attributes = True  # Remplace 'orm_mode' par 'from_attributes'
+        from_attributes = True  
 
 class LoginRequest(BaseModel):
     email: str

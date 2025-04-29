@@ -1,11 +1,62 @@
+# version: "3.8"
+# services:
+#   # Service d'authentification
+#   auth_service:
+#     build: ./auth_service  # Chemin vers le dossier contenant le Dockerfile pour auth_service
+#     ports:
+#       - "8000:8000"  # Redirige le port 8000 de la machine hôte vers 8000 du conteneur
+#     environment:
+#       - DATABASE_URL=postgresql://postgres:password@postgres:5432/authdb  # URL de connexion à la base de données
+#       - SECRET_KEY=secretkey  # Clé secrète pour la création de tokens JWT
+#       - ALGORITHM=HS256  # Algorithme utilisé pour JWT
+#       - ACCESS_TOKEN_EXPIRE_MINUTES=30  # Durée de validité du token JWT
+#     depends_on:
+#       - postgres  # Ce service attend que le service "postgres" soit démarré
+#     networks:
+#       - app_network  # Connecté au réseau "app_network"
+
+#   # Service de gestion des salles
+#   salle_service:
+#     build: ./salle_service  # Chemin vers le dossier contenant le Dockerfile pour salle_service
+#     ports:
+#       - "8001:8001"  # Redirige le port 8001 de la machine hôte vers 8001 du conteneur
+#     environment:
+#       - DATABASE_URL=postgresql://postgres:password@postgres:5432/salledb  # URL de connexion à la base de données
+#     depends_on:
+#       - postgres  # Ce service attend que le service "postgres" soit démarré
+#     networks:
+#       - app_network  # Connecté au réseau "app_network"
+
+#   # Service PostgreSQL (Base de données)
+#   postgres:
+#     image: postgres:latest  # Utilise la dernière version de l'image officielle PostgreSQL
+#     environment:
+#       POSTGRES_USER: postgres  # Utilisateur de la base de données
+#       POSTGRES_PASSWORD: password  # Mot de passe de la base de données
+#       POSTGRES_DB: salledb  # Base de données créée automatiquement au démarrage
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data  # Persistance des données dans un volume
+#     networks:
+#       - app_network  # Connecté au réseau "app_network"
+
+# networks:
+#   app_network:
+#     driver: bridge  # Utilisation du driver "bridge" pour le réseau
+
+# volumes:
+#   postgres_data:
+
+
 version: "3.8"
+
 services:
+  # Service d'authentification
   auth_service:
     build: ./auth_service
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@postgres:5432/authdb  # Utilise "user" et "authdb"
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/authdb
       - SECRET_KEY=secretkey
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
@@ -14,14 +65,39 @@ services:
     networks:
       - app_network
 
+  # Service de gestion des salles
+  salle_service:
+    build: ./salle_service
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/salledb
+    depends_on:
+      - postgres
+    networks:
+      - app_network
+
+  # Service de réservation
+  salle_reservation:
+    build: ./salle_reservation
+    ports:
+      - "8002:8002"  # Assurez-vous que le port ne soit pas déjà utilisé
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/salledb  # Assurez-vous que le service "reservation" utilise la bonne base de données si nécessaire
+    depends_on:
+      - postgres
+    networks:
+      - app_network
+
+  # Service PostgreSQL
   postgres:
     image: postgres:latest
     environment:
-      POSTGRES_USER: user
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: authdb  # Crée la base "authdb"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app_network
 

@@ -4,11 +4,17 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 
+# Charger les variables d'environnement du fichier .env
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@postgres:5432/authdb")
 
-engine = create_engine(DATABASE_URL)
+# Créer l'URL de connexion à la base de données PostgreSQL
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@postgres:5432/salledb")
+
+
+
+# Créer le moteur SQLAlchemy
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
