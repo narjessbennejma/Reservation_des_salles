@@ -6,14 +6,18 @@ from datetime import datetime, timedelta
 from . import schemas, models, database
 import os
 import logging
+from dotenv import load_dotenv
+load_dotenv()
 
 router = APIRouter()
 logging.basicConfig(level=logging.INFO)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
-
+#SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = "secretkey"
+#ALGORITHM = os.getenv("ALGORITHM")HS256
+ALGORITHM = "HS256"
+#ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 def get_db():
     db = database.SessionLocal()
     try:
@@ -65,36 +69,35 @@ def login(user: schemas.LoginRequest, db: Session = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/profile", response_model=schemas.UserResponse)
-def profile(authorization: str = Header(...), db: Session = Depends(get_db)):
-    logging.info(f"Received Authorization header: {authorization}")
-
+def profile(
+    authorization: str = Header(..., description="Authorization: Bearer <token>"),
+    db: Session = Depends(get_db)
+):
+    print("SECRET_KEY:", SECRET_KEY)
     try:
-        token = authorization.split(" ")[1]
-        logging.info(f"Extracted token: {token}")
-    except IndexError:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid token format. Expected 'Bearer <token>'"
-        )
+        scheme, token = authorization.split(" ")
+        if scheme.lower() != "bearer":
+            raise HTTPException(status_code=400, detail="Format du token invalide")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Format du token attendu: Bearer <token>")
 
     credentials_exception = HTTPException(
         status_code=401,
-        detail="Could not validate credentials",
+        detail="Impossible de valider les identifiants",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        logging.info(f"Decoded payload: {payload}")  # Log du payload pour voir ce que contient le token
-        email: str = payload.get("sub")
+        email = payload.get("sub")
         if email is None:
             raise credentials_exception
     except JWTError as e:
-        logging.error(f"JWT error: {str(e)}")  # Log de l'erreur JWT
+        logging.error(f"Erreur JWT : {str(e)}")
         raise credentials_exception
 
     user = db.query(models.User).filter(models.User.email == email).first()
     if user is None:
         raise credentials_exception
-    
+
     return user

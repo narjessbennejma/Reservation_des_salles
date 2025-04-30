@@ -56,3 +56,14 @@ def delete_salle(salle_id: int, db: Session = Depends(get_db)):
     db.delete(db_salle)
     db.commit()
     return {"detail": "Salle supprimée"}
+
+
+@router.patch("/{salle_id}/etat")
+def modifier_etat_salle(salle_id: int, etat: dict, db: Session = Depends(get_db)):
+    salle = db.query(models.Salle).get(salle_id)
+    if not salle:
+        raise HTTPException(status_code=404, detail="Salle non trouvée")
+    salle.etat = etat["etat"]
+    db.commit()
+    db.refresh(salle)
+    return salle

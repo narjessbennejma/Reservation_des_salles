@@ -8,3 +8,4 @@ class Salle(Base):
     nom = Column(String, index=True)
     capacite = Column(Integer)
     localisation = Column(String)
+    etat = Column(String, default="disponible")

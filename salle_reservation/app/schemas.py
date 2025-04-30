@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from datetime import datetime
 
 class ReservationCreate(BaseModel):
-    user_id: int
     salle_id: int
     debut: datetime
     fin: datetime
