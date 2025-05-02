@@ -11,9 +11,12 @@ WORKDIR /app
 COPY ./app ./app
 COPY requirements.txt .
 COPY wait-for-postgres.sh .
+COPY start.sh .  
 
-# Donner les permissions d'exécution au script
-RUN chmod +x /app/wait-for-postgres.sh
+# Donner les permissions d'exécution aux scripts
+RUN chmod +x /app/wait-for-postgres.sh && chmod +x /app/start.sh  
+
+
 
 # Installer les dépendances
 RUN pip install --no-cache-dir -r requirements.txt
@@ -22,4 +25,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8000
 
 # Commande de démarrage (attend que Postgres soit prêt)
-CMD ["/app/wait-for-postgres.sh", "postgres", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+#CMD ["/app/wait-for-postgres.sh", "postgres", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["./start.sh"]

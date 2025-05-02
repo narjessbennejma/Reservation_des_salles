@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: salle-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: salle-service
+  template:
+    metadata:
+      labels:
+        app: salle-service  
+    spec:
+      containers:
+        - name: salle-service  
+          image: bennejma801/salle_service:latest
+          ports:
+            - containerPort: 8001
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://postgres:password@postgres:5432/salledb"
+            - name: KAFKA_BROKER
+              value: "kafka:9092"

@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from app import models, schemas, database
 from datetime import datetime, timedelta
+from app.kafka_producer import envoyer_evenement
 
 router = APIRouter()
 
@@ -65,6 +66,15 @@ async def reserver_salle(
     db.commit()
     db.refresh(nouvelle_reservation)
 
+    envoyer_evenement("reservation.created", {
+        "reservation_id": nouvelle_reservation.id,
+        "user_id": current_user["id"],
+        "salle_id": reservation.salle_id,
+        "debut": str(reservation.debut),
+        "fin": str(reservation.fin)
+    })
+
+
     try:
         async with httpx.AsyncClient() as client:
             response = await client.patch(
@@ -122,6 +132,12 @@ async def annuler_reservation(
     salle_id = reservation.salle_id
     db.delete(reservation)
     db.commit()
+
+    envoyer_evenement("reservation.cancelled", {
+        "reservation_id": reservation.id,
+        "user_id": current_user["id"],
+        "salle_id": salle_id
+    })
 
     # Réinitialiser l'état de la salle
     try:

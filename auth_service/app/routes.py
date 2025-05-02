@@ -7,16 +7,15 @@ from . import schemas, models, database
 import os
 import logging
 from dotenv import load_dotenv
+
+
 load_dotenv()
 
 router = APIRouter()
 logging.basicConfig(level=logging.INFO)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-#SECRET_KEY = os.getenv("SECRET_KEY")
 SECRET_KEY = "secretkey"
-#ALGORITHM = os.getenv("ALGORITHM")HS256
 ALGORITHM = "HS256"
-#ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 def get_db():
     db = database.SessionLocal()
@@ -67,6 +66,7 @@ def login(user: schemas.LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     access_token = create_access_token(data={"sub": db_user.email})
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @router.get("/profile", response_model=schemas.UserResponse)
 def profile(

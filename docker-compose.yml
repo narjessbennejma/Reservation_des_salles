@@ -50,7 +50,6 @@
 version: "3.8"
 
 services:
-  # Service d'authentification
   auth_service:
     build: ./auth_service
     ports:
@@ -60,12 +59,12 @@ services:
       - SECRET_KEY=secretkey
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - KAFKA_BROKER=kafka:9092
     depends_on:
       - postgres
     networks:
       - app_network
 
-  # Service de gestion des salles
   salle_service:
     build: ./salle_service
     ports:
@@ -74,22 +73,22 @@ services:
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/salledb
     depends_on:
       - postgres
+      - kafka 
     networks:
       - app_network
 
-  # Service de réservation
   salle_reservation:
     build: ./salle_reservation
     ports:
-      - "8002:8002"  # Assurez-vous que le port ne soit pas déjà utilisé
+      - "8002:8002"
     environment:
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/salledb  # Assurez-vous que le service "reservation" utilise la bonne base de données si nécessaire
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/salledb
+      - KAFKA_BROKER=kafka:9092
     depends_on:
       - postgres
     networks:
       - app_network
 
-  # Service PostgreSQL
   postgres:
     image: postgres:latest
     environment:
@@ -98,6 +97,48 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app_network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - app_network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    depends_on:
+      - zookeeper
+    networks:
+      - app_network
+
+  sonarqube:
+    image: sonarqube:community
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    networks:
+      - app_network
+
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli
+    depends_on:
+      - sonarqube
     networks:
       - app_network
 

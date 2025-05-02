@@ -8,5 +8,6 @@ aiohttp
 requests
 psycopg2-binary
 httpx
-
-
+kafka-python
+aiokafka
+confluent-kafka

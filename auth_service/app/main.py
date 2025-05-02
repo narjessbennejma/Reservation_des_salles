@@ -5,6 +5,8 @@ from authlib.integrations.starlette_client import OAuth
 from dotenv import load_dotenv
 import os
 import secrets
+import  uvicorn
+from .routes import router
 
 load_dotenv()
 
@@ -52,3 +54,7 @@ async def auth(request: Request):
 async def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/")
+
+app.include_router(router)
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
